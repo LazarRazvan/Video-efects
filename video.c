@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
 	end = clock();
 	time = (double)(end - start ) / CLOCKS_PER_SEC;
 	printf("------------------------------------\n");
-	printf("| Time of running is : %lf    |\n", time);
+	printf("| Sequential time is : %lf    |\n", time);
 	printf("------------------------------------\n");
 
 	fflush(in);
