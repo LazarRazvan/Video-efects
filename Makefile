@@ -1,8 +1,5 @@
-build: read_video.c
-	gcc -Wall read_video.c -o filter
+build: video.c
+	gcc -Wall video.c -o effect
 
-run: filter
-	./filter
-
-clean:
-	rm -rf filter
+clean: effect
+	rm -rf effect

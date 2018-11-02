@@ -18,7 +18,7 @@ echo "Start application... "
 make
 
 #run
-./filter $width $height
+./effect $width $height
 
 #clean
 make clean
