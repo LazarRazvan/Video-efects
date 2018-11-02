@@ -18,7 +18,7 @@ void process_frame(unsigned char *frame, int height, int width) {
 			pixel_r = i * (width * 3) + j * 3 + 0;
 			pixel_g = i * (width * 3) + j * 3 + 1;
 			pixel_b = i * (width * 3) + j * 3 + 2;
-			frame[pixel_r] = 255 - frames[pixel_r];
+			frame[pixel_r] = 255 - frame[pixel_r];
 			frame[pixel_g] = 255 - frame[pixel_g];
 			frame[pixel_b] = 255 - frame[pixel_b];
 		}
