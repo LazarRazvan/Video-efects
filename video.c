@@ -4,42 +4,30 @@
 #include <time.h>
 
 /*
- * in 	: pipe open for read
- * out 	: pipe open for write
- * Function reads video streams from the input pipe, process them and
- * send back to the output pipe
- * TODO : Paralize this
+ * Function receive a frame and apply effects to it.
+ * Frames are stored using a 3D matrix, but instead of matrix we use
+ * a linearized array.
+ * You can see the offset of eache pixel_{r,g,b} taken out from the
+ * liniarized array
  */
-void process_video(FILE *in, FILE *out, int width, int height) {
-	unsigned char frm_arr[height * width * 3];
-	int count, frame_size, pixel_r, pixel_g, pixel_b;
+void process_frame(unsigned char *frame, int height, int width) {
+	int pixel_r, pixel_g, pixel_b;
 
-	frame_size = width * height * 3;
-	/*
-	 * We read from in pipe until the count bytes read are less than a
-	 * frame size
-	 */
-	for (;;) {
-		count = fread(frm_arr, 1, frame_size, in);
-		if (count != frame_size)
-			break;
-
-		for (int i = 0; i < height; i++)
-			for (int j = 0; j < width; j++) {
-				pixel_r = i * (width * 3) + j * 3 + 0;
-				pixel_g = i * (width * 3) + j * 3 + 1;
-				pixel_b = i * (width * 3) + j * 3 + 2;
-				frm_arr[pixel_r] = 255 - frm_arr[pixel_r];
-				frm_arr[pixel_g] = 255 - frm_arr[pixel_g];
-				frm_arr[pixel_b] = 255 - frm_arr[pixel_b];
-			}
-		count = fwrite(frm_arr, 1, frame_size, out);
-	}
+	for (int i = 0; i < height; i++)
+		for (int j = 0; j < width; j++) {
+			pixel_r = i * (width * 3) + j * 3 + 0;
+			pixel_g = i * (width * 3) + j * 3 + 1;
+			pixel_b = i * (width * 3) + j * 3 + 2;
+			frame[pixel_r] = 255 - frames[pixel_r];
+			frame[pixel_g] = 255 - frame[pixel_g];
+			frame[pixel_b] = 255 - frame[pixel_b];
+		}
 }
 
 int main(int argc, char **argv) {
 	FILE *in = NULL, *out = NULL;
-	int width, height;
+	int width, height, count, frame_size;
+	unsigned char *frame;
 	clock_t start, end;
 	double time;
 
@@ -53,7 +41,8 @@ int main(int argc, char **argv) {
 
 	width = atoi(argv[1]);
 	height = atoi(argv[2]);
-
+	frame_size = height * width * 3;
+	frame = (unsigned char *)calloc(frame_size, sizeof(unsigned char));
 	/*
 	 * Video streams will be read using pipes. A pipe can only be used
 	 * for read or for write because it's unidirectional. Flags :
@@ -90,8 +79,20 @@ int main(int argc, char **argv) {
 		exit(-1);
 	}
 
+	/*
+	 * Start the timer to get the run time of the sequential algorithm time.
+	 * We read frames from video until no one is left. After completing the
+	 * read we process the stream and then write the result stream back to
+	 * the output pipe
+	 */
 	start = clock();
-	process_video(in, out, width, height);
+	for (;;) {
+		count = fread(frame, 1, frame_size, in);
+		if (count != frame_size)
+			break;
+		process_frame(frame, height, width);
+		fwrite(frame, 1, frame_size, out);
+	}
 	end = clock();
 	time = (double)(end - start ) / CLOCKS_PER_SEC;
 	printf("------------------------------------\n");
