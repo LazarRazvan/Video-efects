@@ -5,18 +5,43 @@
 #include <limits.h>
 #define  MASTER		0
 
+/*
+ * Function receive a frame and apply effects to it.
+ * Frames are stored using a 3D matrix, but instead of matrix we use
+ * a linearized array.
+ * You can see the offset of eache pixel_{r,g,b} taken out from the
+ * liniarized array
+ */
+void process_frame(unsigned char *frame, int frame_size, int width) {
+	int pixel_r, pixel_g, pixel_b, height;
+
+	height = frame_size / (width * 3);
+
+	for (int i = 0; i < height; i++)
+		for (int j = 0; j < width; j++) {
+			pixel_r = i * (width * 3) + j * 3 + 0;
+			pixel_g = i * (width * 3) + j * 3 + 1;
+			pixel_b = i * (width * 3) + j * 3 + 2;
+			frame[pixel_r] = 255 - frame[pixel_r];
+			frame[pixel_g] = 255 - frame[pixel_g];
+			frame[pixel_b] = 255 - frame[pixel_b];
+		}
+}
+
 int main (int argc, char *argv[])
 {
 	int numtasks, taskid, *send_counts, *displs;
-	int width, height, frame_size;
+	int width, height, frame_size, frames_nr;
 	unsigned char *frame, *thread_frame;
 	FILE *in, *out;
+	clock_t start, end;
+	double time;
 
 	/*
 	 * Check if the application was start corectly
 	 */
-	if (argc != 3) {
-		printf("Usage : ./filter width height\n");
+	if (argc != 4) {
+		printf("Usage : ./filter width height frames_number\n");
 		exit(-1);
 	}
 
@@ -28,6 +53,7 @@ int main (int argc, char *argv[])
 	displs = (int *)calloc(numtasks, sizeof(int));
 	width = atoi(argv[1]);
 	height = atoi(argv[2]);
+	frames_nr = atoi(argv[3]);
 	frame_size = height * width * 3;
 
 	/*
@@ -103,23 +129,50 @@ int main (int argc, char *argv[])
 	}
 
 	/* alloc a buffer for each thread to receive chunks from frame */
-	thread_frame = (unsigned char *)calloc(send_counts[taskid], sizoef(unsigned char*));
+	thread_frame = (unsigned char *)calloc(send_counts[taskid], sizeof(unsigned char*));
 	if (!thread_frame) {
 		printf("Falt to alloc thread frame buffer. Exit !\n");
 		exit(-1);
 	}
 
-	/* perform read, process, and write */
-	for (;;) {
+	/* start counting the time */
+	if (taskid == MASTER)
+		start = clock();
+
+	for (int  frm_nr = 0; frm_nr < frames_nr; frm_nr++) {
 		if (taskid == MASTER) {
-			count = fread(frame, 1, frame_size, in);
-			if (count != frame_size)
-				break;
+			/* read a frame from pipe */
+			fread(frame, 1, frame_size, in);
 		}
+		/* send chunks to all processes */
+		MPI_Scatterv(frame, send_counts, displs, MPI_CHAR, thread_frame, send_counts[taskid], MPI_CHAR, 0, MPI_COMM_WORLD);
+
+		/* each process perform changes of chunk of data it receive */
+		process_frame(thread_frame, send_counts[taskid], width);
+
+		/* send data back to master */
+		MPI_Gatherv(thread_frame, send_counts[taskid], MPI_CHAR, frame, send_counts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+		/* master write frame on output pipe */
+		if (taskid == MASTER) {
+			/* read a frame from pipe */
+			fwrite(frame, 1, frame_size, out);
+		}
+	}
+
+	/* stop counting the time */
+	if (taskid == MASTER) {
+		end = clock();
+		time = (double)(end - start ) / CLOCKS_PER_SEC;
+		printf("-----------------------------------\n");
+		printf("| Time with %d procs : %lf    |\n", numtasks, time);
+		printf("-----------------------------------\n");
+		free(frame);
 	}
 	// free memory
 	free(send_counts);
 	free(displs);
+	free(thread_frame);
 	/*
 	 * Master close opened pipes
 	 */

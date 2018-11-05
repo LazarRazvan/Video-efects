@@ -2,7 +2,7 @@
 
 if [ $# -eq 0 ]
 then
-        echo "Usage : ./run.sh example.mp4"
+        echo "Usage : ./run.sh example.mp4 processes_number"
         exit
 fi
 
@@ -14,4 +14,13 @@ nr_frm=$(ffprobe -select_streams v -show_streams $1 | grep nb_frames | cut -d "=
 echo "+++++++++++++++++++++++++++++++++++++++"
 echo "Video resolution is : $width x $height, frames number : $nr_frm"
 echo "Start application... "
+
+#compile
+make -f Makefile_mpi
+
+#run
+mpirun -np $2 ./effect $width $height $nr_frm
+
+#clean
+make -f Makefile_mpi clean
 
