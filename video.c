@@ -10,7 +10,7 @@
  * You can see the offset of eache pixel_{r,g,b} taken out from the
  * liniarized array
  */
-void process_frame(unsigned char *frame, int height, int width) {
+void apply_negative_on_frame(unsigned char *frame, int height, int width) {
 	int pixel_r, pixel_g, pixel_b;
 
 	for (int i = 0; i < height; i++)
