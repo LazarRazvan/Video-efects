@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <time.h>
+#include <string.h>
 
 /*
  * Function receive a frame and apply effects to it.
@@ -28,19 +29,21 @@ int main(int argc, char **argv) {
 	FILE *in = NULL, *out = NULL;
 	int width, height, count, frame_size;
 	unsigned char *frame;
+	char *filter;
 	clock_t start, end;
 	double time;
 
 	/*
 	 * Check if the application was start corectly
 	 */
-	if (argc != 3) {
-		printf("Usage : ./filter width height\n");
+	if (argc != 4) {
+		printf("Usage : ./filter width height filter\n");
 		exit(-1);
 	}
 
 	width = atoi(argv[1]);
 	height = atoi(argv[2]);
+	filter = strdup(argv[3]);
 	frame_size = height * width * 3;
 	frame = (unsigned char *)calloc(frame_size, sizeof(unsigned char));
 	/*
@@ -90,7 +93,7 @@ int main(int argc, char **argv) {
 		count = fread(frame, 1, frame_size, in);
 		if (count != frame_size)
 			break;
-		process_frame(frame, height, width);
+		apply_negative_on_frame(frame, height, width);
 		fwrite(frame, 1, frame_size, out);
 	}
 	end = clock();
