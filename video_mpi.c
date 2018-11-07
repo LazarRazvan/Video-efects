@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <limits.h>
+#include <string.h>
 #define  MASTER		0
 
 /*
@@ -12,7 +13,7 @@
  * You can see the offset of eache pixel_{r,g,b} taken out from the
  * liniarized array
  */
-void process_frame(unsigned char *frame, int frame_size, int width) {
+void apply_negative_on_frame(unsigned char *frame, int frame_size, int width) {
 	int pixel_r, pixel_g, pixel_b, height;
 
 	height = frame_size / (width * 3);
@@ -28,11 +29,42 @@ void process_frame(unsigned char *frame, int frame_size, int width) {
 		}
 }
 
+void apply_sepia_on_frame(unsigned char *frame, int frame_size, int width) {
+	int pixel_r, pixel_g, pixel_b, height;
+
+	height = frame_size / (width * 3);
+
+	for (int i = 0; i < height; i++)
+		for (int j = 0; j < width; j++) {
+			int tr, tg, tb;
+			pixel_r = i * (width * 3) + j * 3 + 0;
+			pixel_g = i * (width * 3) + j * 3 + 1;
+			pixel_b = i * (width * 3) + j * 3 + 2;
+			tr = (frame[pixel_r] * 0.393) + (frame[pixel_g] * 0.769) + (frame[pixel_b] * 0.189);
+			tg = (frame[pixel_r] * 0.349) + (frame[pixel_g] * 0.686) + (frame[pixel_b] * 0.168);
+			tb = (frame[pixel_r] * 0.272) + (frame[pixel_g] * 0.534) + (frame[pixel_b] * 0.131);
+
+			if (tr > 255)
+				frame[pixel_r] = 255;
+			else
+				frame[pixel_r] = tr;
+			if (tg > 255)
+				frame[pixel_g] = 255;
+			else
+				frame[pixel_g] = tg;
+			if (tb > 255)
+				frame[pixel_b] = 255;
+			else
+				frame[pixel_b] = tb;
+		}
+}
+
 int main (int argc, char *argv[])
 {
 	int numtasks, taskid, *send_counts, *displs;
 	int width, height, frame_size, frames_nr;
 	unsigned char *frame, *thread_frame;
+	char *filter;
 	FILE *in, *out;
 	clock_t start, end;
 	double time;
@@ -40,8 +72,8 @@ int main (int argc, char *argv[])
 	/*
 	 * Check if the application was start corectly
 	 */
-	if (argc != 4) {
-		printf("Usage : ./filter width height frames_number\n");
+	if (argc != 5) {
+		printf("Usage : ./filter width height frames_number filter\n");
 		exit(-1);
 	}
 
@@ -54,6 +86,7 @@ int main (int argc, char *argv[])
 	width = atoi(argv[1]);
 	height = atoi(argv[2]);
 	frames_nr = atoi(argv[3]);
+	filter = strdup(argv[4]);
 	frame_size = height * width * 3;
 
 	/*
@@ -139,26 +172,58 @@ int main (int argc, char *argv[])
 	if (taskid == MASTER)
 		start = clock();
 
-	for (int  frm_nr = 0; frm_nr < frames_nr; frm_nr++) {
-		if (taskid == MASTER) {
-			/* read a frame from pipe */
-			fread(frame, 1, frame_size, in);
-		}
-		/* send chunks to all processes */
-		MPI_Scatterv(frame, send_counts, displs, MPI_CHAR, thread_frame, send_counts[taskid], MPI_CHAR, 0, MPI_COMM_WORLD);
+	if (strcmp(filter, "sepia") == 0) {
+		for (int  frm_nr = 0; frm_nr < frames_nr; frm_nr++) {
+			if (taskid == MASTER) {
+				/* read a frame from pipe */
+				fread(frame, 1, frame_size, in);
+			}
+			/* send chunks to all processes */
+			MPI_Scatterv(frame, send_counts, displs, MPI_CHAR, thread_frame, send_counts[taskid], MPI_CHAR, 0, MPI_COMM_WORLD);
 
-		/* each process perform changes of chunk of data it receive */
-		process_frame(thread_frame, send_counts[taskid], width);
+			/* each process perform changes of chunk of data it receive */
+			apply_negative_on_frame(thread_frame, send_counts[taskid], width);
 
-		/* send data back to master */
-		MPI_Gatherv(thread_frame, send_counts[taskid], MPI_CHAR, frame, send_counts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
+			/* send data back to master */
+			MPI_Gatherv(thread_frame, send_counts[taskid], MPI_CHAR, frame, send_counts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-		/* master write frame on output pipe */
-		if (taskid == MASTER) {
-			/* read a frame from pipe */
-			fwrite(frame, 1, frame_size, out);
+			/* master write frame on output pipe */
+			if (taskid == MASTER) {
+				/* read a frame from pipe */
+				fwrite(frame, 1, frame_size, out);
+			}
 		}
 	}
+	else if (strcmp(filter, "negative") == 0) {
+		for (int  frm_nr = 0; frm_nr < frames_nr; frm_nr++) {
+			if (taskid == MASTER) {
+				/* read a frame from pipe */
+				fread(frame, 1, frame_size, in);
+			}
+			/* send chunks to all processes */
+			MPI_Scatterv(frame, send_counts, displs, MPI_CHAR, thread_frame, send_counts[taskid], MPI_CHAR, 0, MPI_COMM_WORLD);
+
+			/* each process perform changes of chunk of data it receive */
+			apply_sepia_on_frame(thread_frame, send_counts[taskid], width);
+
+			/* send data back to master */
+			MPI_Gatherv(thread_frame, send_counts[taskid], MPI_CHAR, frame, send_counts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+			/* master write frame on output pipe */
+			if (taskid == MASTER) {
+				/* read a frame from pipe */
+				fwrite(frame, 1, frame_size, out);
+			}
+		}
+	}
+	else if (strcmp(filter, "blur") == 0) {
+
+	}
+	else {
+		printf("Please choose a filter from sepia/negative/blur\n");
+		exit(-1);
+	}
+	
 
 	/* stop counting the time */
 	if (taskid == MASTER) {
