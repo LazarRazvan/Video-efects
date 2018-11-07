@@ -142,6 +142,10 @@ int main(int argc, char **argv) {
 	else if (strcmp(filter, "blur") == 0) {
 
 	}
+	else {
+		printf("Please choose a filter from sepia/negative/blur\n");
+		exit(-1);
+	}
 
 	time = (double)(end - start ) / CLOCKS_PER_SEC;
 	printf("------------------------------------\n");
