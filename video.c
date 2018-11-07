@@ -53,6 +53,40 @@ void apply_sepia_on_frame(unsigned char *frame, int height, int width) {
 		}
 }
 
+void apply_blur_on_frame (unsigned char *frame, int height, int width) {
+
+        int pixel_r, pixel_g, pixel_b;
+	int sum_r, sum_g, sum_b;
+	float Kernel[3][3] = {{1/9.0, 1/9.0, 1/9.0},
+                              {1/9.0, 1/9.0, 1/9.0},
+                              {1/9.0, 1/9.0, 1/9.0}
+                             };
+
+	for (int count = 0; count < 5; count++){
+        	for (int i = 1; i < height - 1; i++){
+        	        for (int j = 1; j < width - 1; j++) {
+				sum_r = 0;
+				sum_g = 0;
+				sum_b = 0;
+
+				for( int k = -1; k <= 1; k++) {
+					for( int y = -1; y <= 1; y++){
+						pixel_r = (i - y) * (width * 3) + (j - k) * 3 + 0;
+                			        pixel_g = (i - y) * (width * 3) + (j - k) * 3 + 1;
+                	        		pixel_b = (i - y) * (width * 3) + (j - k) * 3 + 2;
+						sum_r += Kernel[y+1][k+1] * frame[pixel_r];
+						sum_g += Kernel[y+1][k+1] * frame[pixel_g];
+						sum_b += Kernel[y+1][k+1] * frame[pixel_b];
+					}
+				}
+				frame[pixel_r] = sum_r;
+				frame[pixel_g] = sum_g;
+				frame[pixel_b] = sum_b;
+			}
+		}
+	}
+}
+
 int main(int argc, char **argv) {
 	FILE *in = NULL, *out = NULL;
 	int width, height, count, frame_size;
@@ -140,7 +174,15 @@ int main(int argc, char **argv) {
 		end = clock();
 	}
 	else if (strcmp(filter, "blur") == 0) {
-
+		start = clock();
+                for (;;) {
+                        count = fread(frame, 1, frame_size, in);
+                        if (count != frame_size)
+                                break;
+                        apply_blur_on_frame(frame, height, width);
+                        fwrite(frame, 1, frame_size, out);
+                }
+                end = clock();
 	}
 	else {
 		printf("Please choose a filter from sepia/negative/blur\n");
