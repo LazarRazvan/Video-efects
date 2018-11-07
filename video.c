@@ -25,6 +25,34 @@ void apply_negative_on_frame(unsigned char *frame, int height, int width) {
 		}
 }
 
+void apply_sepia_on_frame(unsigned char *frame, int height, int width) {
+	int pixel_r, pixel_g, pixel_b;
+
+	for (int i = 0; i < height; i++)
+		for (int j = 0; j < width; j++) {
+			int tr, tg, tb;
+			pixel_r = i * (width * 3) + j * 3 + 0;
+			pixel_g = i * (width * 3) + j * 3 + 1;
+			pixel_b = i * (width * 3) + j * 3 + 2;
+			tr = (frame[pixel_r] * 0.393) + (frame[pixel_g] * 0.769) + (frame[pixel_b] * 0.189);
+			tg = (frame[pixel_r] * 0.349) + (frame[pixel_g] * 0.686) + (frame[pixel_b] * 0.168);
+			tb = (frame[pixel_r] * 0.272) + (frame[pixel_g] * 0.534) + (frame[pixel_b] * 0.131);
+
+			if (tr > 255)
+				frame[pixel_r] = 255;
+			else
+				frame[pixel_r] = tr;
+			if (tg > 255)
+				frame[pixel_g] = 255;
+			else
+				frame[pixel_g] = tg;
+			if (tb > 255)
+				frame[pixel_b] = 255;
+			else
+				frame[pixel_b] = tb;
+		}
+}
+
 int main(int argc, char **argv) {
 	FILE *in = NULL, *out = NULL;
 	int width, height, count, frame_size;
@@ -82,21 +110,39 @@ int main(int argc, char **argv) {
 		exit(-1);
 	}
 
+
 	/*
 	 * Start the timer to get the run time of the sequential algorithm time.
 	 * We read frames from video until no one is left. After completing the
 	 * read we process the stream and then write the result stream back to
 	 * the output pipe
 	 */
-	start = clock();
-	for (;;) {
-		count = fread(frame, 1, frame_size, in);
-		if (count != frame_size)
-			break;
-		apply_negative_on_frame(frame, height, width);
-		fwrite(frame, 1, frame_size, out);
+	if (strcmp(filter, "sepia") == 0) {
+		start = clock();
+		for (;;) {
+			count = fread(frame, 1, frame_size, in);
+			if (count != frame_size)
+				break;
+			apply_sepia_on_frame(frame, height, width);
+			fwrite(frame, 1, frame_size, out);
+		}
+		end = clock();
 	}
-	end = clock();
+	else if (strcmp(filter, "negative") == 0) {
+		start = clock();
+		for (;;) {
+			count = fread(frame, 1, frame_size, in);
+			if (count != frame_size)
+				break;
+			apply_negative_on_frame(frame, height, width);
+			fwrite(frame, 1, frame_size, out);
+		}
+		end = clock();
+	}
+	else if (strcmp(filter, "blur") == 0) {
+
+	}
+
 	time = (double)(end - start ) / CLOCKS_PER_SEC;
 	printf("------------------------------------\n");
 	printf("| Sequential time is : %lf    |\n", time);
