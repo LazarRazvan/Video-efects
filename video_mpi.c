@@ -72,14 +72,14 @@ void apply_blur_on_frame (unsigned char *frame, int frame_size, int width) {
 	height = frame_size / (width * 3);
 	dst = (unsigned char *)calloc(frame_size, sizeof(unsigned char));
 
-	for (int i = 1; i < height - 1; i++){
-                for (int j = 1; j < width - 1; j++) {
+	for (int i = 0; i < height; i++){
+                for (int j = 0; j < width; j++) {
 			pixel_r = i * (width * 3) + j * 3 + 0;
 			pixel_g = i * (width * 3) + j * 3 + 1;
 			pixel_b = i * (width * 3) + j * 3 + 2;
 			dst[pixel_r] = frame[pixel_r];
 			dst[pixel_g] = frame[pixel_g];
-			dst[pixel_b] = frame[pixel_b];	
+			dst[pixel_b] = frame[pixel_b];
 		}
 	}
 
@@ -106,14 +106,14 @@ void apply_blur_on_frame (unsigned char *frame, int frame_size, int width) {
 			}
 		}
 	}
-	for (int i = 1; i < height - 1; i++){
-                for (int j = 1; j < width - 1; j++) {
+	for (int i = 0; i < height; i++){
+                for (int j = 0; j < width; j++) {
 			pixel_r = i * (width * 3) + j * 3 + 0;
 			pixel_g = i * (width * 3) + j * 3 + 1;
 			pixel_b = i * (width * 3) + j * 3 + 2;
 			frame[pixel_r] = dst[pixel_r];
 			frame[pixel_g] = dst[pixel_g];
-			frame[pixel_b] = dst[pixel_b];	
+			frame[pixel_b] = dst[pixel_b];
 		}
 	}
 }
