@@ -6,5 +6,6 @@ sudo apt-get install ffmpeg
 sudo apt-get install mediainfo
 sudo apt-get install mpich
 sudo apt-get install valgrind
+sudo apt-get install make
 echo "++++++++++++++++++++++++++++++++++"
 echo "Setup is done. Please start run.sh"

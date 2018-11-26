@@ -61,19 +61,19 @@ void apply_sepia_on_frame(unsigned char *frame, int frame_size, int width) {
 
 void apply_blur_on_frame (unsigned char *frame, int frame_size, int width) {
 
-        int pixel_r, pixel_g, pixel_b, height;
+	int pixel_r, pixel_g, pixel_b, height;
 	int sum_r, sum_g, sum_b;
 	unsigned char *dst;
 	float Kernel[3][3] = {{1/9.0, 1/9.0, 1/9.0},
-                              {1/9.0, 1/9.0, 1/9.0},
-                              {1/9.0, 1/9.0, 1/9.0}
-                             };
+							  {1/9.0, 1/9.0, 1/9.0},
+							  {1/9.0, 1/9.0, 1/9.0}
+							 };
 
 	height = frame_size / (width * 3);
 	dst = (unsigned char *)calloc(frame_size, sizeof(unsigned char));
 
 	for (int i = 0; i < height; i++){
-                for (int j = 0; j < width; j++) {
+		for (int j = 0; j < width; j++) {
 			pixel_r = i * (width * 3) + j * 3 + 0;
 			pixel_g = i * (width * 3) + j * 3 + 1;
 			pixel_b = i * (width * 3) + j * 3 + 2;
@@ -84,17 +84,16 @@ void apply_blur_on_frame (unsigned char *frame, int frame_size, int width) {
 	}
 
 	for(int count = 0; count < 5; count ++){
-        	for (int i = 1; i < height - 1; i++){
-                	for (int j = 1; j < width - 1; j++) {
-
+		for (int i = 1; i < height - 1; i++){
+			for (int j = 1; j < width - 1; j++) {
 				sum_r = 0;
 				sum_g = 0;
 				sum_b = 0;
 				for( int k = -1; k <= 1; k++) {
 					for( int y = -1; y <= 1; y++){
 						pixel_r = (i - y) * (width * 3) + (j - k) * 3 + 0;
-                			        pixel_g = (i - y) * (width * 3) + (j - k) * 3 + 1;
-                        			pixel_b = (i - y) * (width * 3) + (j - k) * 3 + 2;
+						pixel_g = (i - y) * (width * 3) + (j - k) * 3 + 1;
+						pixel_b = (i - y) * (width * 3) + (j - k) * 3 + 2;
 						sum_r += Kernel[y+1][k+1] * frame[pixel_r];
 						sum_g += Kernel[y+1][k+1] * frame[pixel_g];
 						sum_b += Kernel[y+1][k+1] * frame[pixel_b];
@@ -107,7 +106,7 @@ void apply_blur_on_frame (unsigned char *frame, int frame_size, int width) {
 		}
 	}
 	for (int i = 0; i < height; i++){
-                for (int j = 0; j < width; j++) {
+		for (int j = 0; j < width; j++) {
 			pixel_r = i * (width * 3) + j * 3 + 0;
 			pixel_g = i * (width * 3) + j * 3 + 1;
 			pixel_b = i * (width * 3) + j * 3 + 2;
@@ -277,26 +276,25 @@ int main (int argc, char *argv[])
 	}
 	else if (strcmp(filter, "blur") == 0) {
 		for (int  frm_nr = 0; frm_nr < frames_nr; frm_nr++) {
-                        if (taskid == MASTER) {
-                                /* read a frame from pipe */
-                                fread(frame, 1, frame_size, in);
-                        }
-                        /* send chunks to all processes */
-                        MPI_Scatterv(frame, send_counts, displs, MPI_CHAR, thread_frame, send_counts[taskid], MPI_CHAR, 0, MPI_COMM_WORLD);
+			if (taskid == MASTER) {
+					/* read a frame from pipe */
+					fread(frame, 1, frame_size, in);
+			}
+			/* send chunks to all processes */
+			MPI_Scatterv(frame, send_counts, displs, MPI_CHAR, thread_frame, send_counts[taskid], MPI_CHAR, 0, MPI_COMM_WORLD);
 
-                        /* each process perform changes of chunk of data it receive */
-                        apply_blur_on_frame(thread_frame, send_counts[taskid], width);
+			/* each process perform changes of chunk of data it receive */
+			apply_blur_on_frame(thread_frame, send_counts[taskid], width);
 
-                        /* send data back to master */
-                        MPI_Gatherv(thread_frame, send_counts[taskid], MPI_CHAR, frame, send_counts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
+			/* send data back to master */
+			MPI_Gatherv(thread_frame, send_counts[taskid], MPI_CHAR, frame, send_counts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-                        /* master write frame on output pipe */
-                        if (taskid == MASTER) {
-                                /* read a frame from pipe */
-                                fwrite(frame, 1, frame_size, out);
-                        }
-                }
-
+			/* master write frame on output pipe */
+			if (taskid == MASTER) {
+					/* read a frame from pipe */
+					fwrite(frame, 1, frame_size, out);
+			}
+		}
 	}
 	else {
 		printf("Please choose a filter from sepia/negative/blur\n");
