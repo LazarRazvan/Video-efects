@@ -247,6 +247,7 @@ int main (int argc, char *argv[])
 		infos[i]->width = width;
 	}
 
+	start = clock();
 	for (int  frm_nr = 0; frm_nr < frames_nr; frm_nr++) {
 		fread(frame, 1, frame_size, in);
 
@@ -264,6 +265,11 @@ int main (int argc, char *argv[])
 		fwrite(frame, 1, frame_size, out);
 	}
 
+	end = clock();
+	time = (double)(end - start ) / CLOCKS_PER_SEC;
+	printf("-------------------------------------\n");
+	printf("| Time with %d threads : %lf    |\n", threads_num, time);
+	printf("-------------------------------------\n");
 	/* Free memory */
 	free (threads);
 	free(send_counts);
