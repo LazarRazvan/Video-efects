@@ -17,3 +17,11 @@ echo "+++++++++++++++++++++++++++++++++++++++"
 echo "Video resolution is : $width x $height, frames number : $nr_frm"
 echo "Start application... "
 
+#compile
+make -f Makefile_lpt
+
+#run
+./effect $width $height $nr_frm $filter $2
+
+#clean
+make -f Makefile_lpt clean
