@@ -17,7 +17,7 @@ echo "+++++++++++++++++++++++++++++++++++++++"
 echo "Video resolution is : $width x $height"
 echo "Start application... "
 #compile
-make
+make -f Makefile_omp
 
 #run
 ./effect $width $height $filter

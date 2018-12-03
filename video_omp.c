@@ -15,9 +15,9 @@
 void apply_negative_on_frame(unsigned char *frame, int height, int width) {
 	int pixel_r, pixel_g, pixel_b, i;
 
-	#pragma omp parallel num_threads(8)
+	#pragma omp parallel num_threads(1)
 	{
-		#pragma omp for private(i) nowait
+		#pragma omp for private(i, pixel_r, pixel_g, pixel_b) nowait
 		for (i = 0; i < height; i++)
 			for (int j = 0; j < width; j++) {
 				pixel_r = i * (width * 3) + j * 3 + 0;
@@ -34,9 +34,9 @@ void apply_negative_on_frame(unsigned char *frame, int height, int width) {
 void apply_sepia_on_frame(unsigned char *frame, int height, int width) {
 	int pixel_r, pixel_g, pixel_b, i;
 
-	#pragma omp parallel num_threads(1)
+	#pragma omp parallel num_threads(8)
 	{
-		#pragma omp for private(i) nowait
+		#pragma omp for private(i, pixel_r, pixel_g, pixel_b) nowait
 		for (i = 0; i < height; i++)
 			for (int j = 0; j < width; j++) {
 				int tr, tg, tb;
@@ -72,10 +72,10 @@ void apply_blur_on_frame (unsigned char *frame, int height, int width) {
                               {1/9.0, 1/9.0, 1/9.0},
                               {1/9.0, 1/9.0, 1/9.0}
                              };
-    #pragma omp parallel num_threads(4)
+    #pragma omp parallel num_threads(8)
     {
     	for (int count = 0; count < 5; count++){
-    		#pragma omp for private(i) nowait
+    		#pragma omp for private(i, pixel_r, pixel_g, pixel_b, sum_r, sum_g, sum_b) nowait
         	for (i = 1; i < height - 1; i++){
         	        for (int j = 1; j < width - 1; j++) {
 				sum_r = 0;
