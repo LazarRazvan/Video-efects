@@ -240,7 +240,7 @@ int main (int argc, char *argv[])
 			MPI_Scatterv(frame, send_counts, displs, MPI_CHAR, thread_frame, send_counts[taskid], MPI_CHAR, 0, MPI_COMM_WORLD);
 
 			/* each process perform changes of chunk of data it receive */
-			apply_negative_on_frame(thread_frame, send_counts[taskid], width);
+			apply_sepia_on_frame(thread_frame, send_counts[taskid], width);
 
 			/* send data back to master */
 			MPI_Gatherv(thread_frame, send_counts[taskid], MPI_CHAR, frame, send_counts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
@@ -262,7 +262,7 @@ int main (int argc, char *argv[])
 			MPI_Scatterv(frame, send_counts, displs, MPI_CHAR, thread_frame, send_counts[taskid], MPI_CHAR, 0, MPI_COMM_WORLD);
 
 			/* each process perform changes of chunk of data it receive */
-			apply_sepia_on_frame(thread_frame, send_counts[taskid], width);
+			apply_negative_on_frame(thread_frame, send_counts[taskid], width);
 
 			/* send data back to master */
 			MPI_Gatherv(thread_frame, send_counts[taskid], MPI_CHAR, frame, send_counts, displs, MPI_CHAR, 0, MPI_COMM_WORLD);
