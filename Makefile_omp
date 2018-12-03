@@ -1,0 +1,5 @@
+build: video_omp.c
+	gcc -Wall video_lpt.c -o effect -fopenmp
+
+clean: effect
+	rm -rf effect
