@@ -1,0 +1,5 @@
+build: video_omp_v2.c
+	gcc -Wall video_omp_v2.c -o effect -fopenmp
+
+clean: effect
+	rm -rf effect
