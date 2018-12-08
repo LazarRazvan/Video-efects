@@ -1,5 +1,0 @@
-build: video_lpt.c video_lpt.h
-	gcc -Wall video_lpt.c -o effect -lpthread
-
-clean: effect
-	rm -rf effect

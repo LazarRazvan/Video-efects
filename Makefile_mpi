@@ -1,6 +1,0 @@
-build: video_mpi.c
-	mpicc -Wall video_mpi.c -o effect
-
-clean: effect
-	rm -rf effect
-
