@@ -8,7 +8,7 @@ Add efects and filters on videos
 
 
 	The video is splitted in frames, read/write using pipes and stored in memory in an
-unsigned char array. 
+	unsigned char array. 
 	There are 4 different implementation :
 		- sequential
 		- parallel using OpenMP
@@ -16,11 +16,11 @@ unsigned char array.
 		- parallel using pthreads
 
 	In parallel implementaion, each thread/process receive a chunk of frames from the
-entire video, apply desired filter on it and recompose the video.
+	entire video, apply desired filter on it and recompose the video.
 
 application on your PC.
 
 	Find run*.sh scripts to run all four implementaion. You can find an mp4 file that
-is used for tests.
+	is used for tests.
 
 	Open scripts to find the arguments.
